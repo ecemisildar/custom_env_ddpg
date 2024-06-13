@@ -2,6 +2,10 @@
 
 The agent learns how to collect goal points in a custom environment in Gazebo using the DDPG algorithm and image observation
 
+# Demo Video
+
+![Demo Video](path_to_your_gif.gif)
+
 The drone model is taken from: https://github.com/NovoG93/sjtu_drone
 
 DDPG algorithm sources:

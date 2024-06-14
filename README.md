@@ -25,7 +25,7 @@ reward = -1 + 2/(1+np.exp(self.dist_array[0]/(self.num_green_pixels+1)))
 ```
 It is a logistic function which combines distances from the target and the green pixel number that the agent sees
 
-![Reward function plot](https://github.com/ecemisildar/custom_env_ddpg/blob/main/figure_1.png)
+![Reward function plot](https://github.com/ecemisildar/custom_env_ddpg/blob/main/media/Figure_1.png)
 
 ## Termination
 Termination is possible when the drone hits the walls or exceeds the episode time
@@ -53,7 +53,7 @@ self.spawn_client = self.node.create_client(SpawnEntity, '/spawn_entity')
 
 # Demo Video
 
-![Demo Video](https://github.com/ecemisildar/custom_env_ddpg/blob/main/gif_example.gif)
+![Demo Video](https://github.com/ecemisildar/custom_env_ddpg/blob/main/media/gif_example.gif)
 
 
 

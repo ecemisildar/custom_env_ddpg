@@ -2,7 +2,7 @@
 
 The agent learns how to collect goal points in a custom environment in Gazebo using the DDPG algorithm and image observation
 
-# Environment Description
+## Environment Description
 The custom environment created in the Gazebo simulation is a square area with 4 walls and green ball objects spawning at random positions in every episode. The drone starts at the origin with a random orientation on the z-axis. 
  ## Observation Space 
  The drone agent only uses image observations thanks to its RGB camera

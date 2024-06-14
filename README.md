@@ -18,6 +18,15 @@ self.action_space = gym.spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float16)
 ## Done 
 The episode is done when the agent collects all the target points in the environment
 
+## Reward Function
+The reward function for 1 target point is given below:
+```
+reward = -1 + 2/(1+np.exp(self.dist_array[0]/(self.num_green_pixels+1)))
+```
+It is a logistic function which combines distances from the target and the green pixel number that the agent sees
+
+![Reward function plot](https://github.com/ecemisildar/custom_env_ddpg/blob/main/figure_1.png)
+
 ## Termination
 Termination is possible when the drone hits the walls or exceeds the episode time
 

@@ -53,7 +53,7 @@ self.spawn_client = self.node.create_client(SpawnEntity, '/spawn_entity')
 
 # Demo Video
 
-![Demo Video](https://github.com/ecemisildar/custom_env_ddpg/blob/main/media/gif_example.gif)
+![Demo Video](https://github.com/ecemisildar/custom_env_ddpg/blob/main/media/ddpg.gif)
 
 
 

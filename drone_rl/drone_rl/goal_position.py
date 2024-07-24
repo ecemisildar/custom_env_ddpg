@@ -31,9 +31,9 @@ class GoalClient(Node):
         # Generate random positions for each ball
         pose = Pose()
         
-        pose.position.x = 5.0 #np.random.uniform(-4,4)
-        pose.position.y = 1.0 #np.random.uniform(-4,4)
-        pose.position.z = 0.5
+        pose.position.x = 3.0 #-2.0
+        pose.position.y = 8.0 #8.0 
+        pose.position.z = 4.0 #1.50
         req.initial_pose = pose
 
         pos = np.array([pose.position.x, pose.position.y, pose.position.z])

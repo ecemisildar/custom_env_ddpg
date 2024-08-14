@@ -1,0 +1,56 @@
+TRAINING:
+ 1722084092 -> lr = 1e-4 successful goal at (-2,10,11) -> 2. floor
+ 
+TEST: both different floors and x,y positions
+ successful goat at (-2.0, 9.0, 11.0) initial 3.0 -> 2. floor
+ successful goat at (-2.0, 11.0, 15.0) initial 5.0 -> 3. floor
+ successful goat at (-3.0, 11.0, 20.0) initial 8.0 -> 4. floor
+ 
+ 
+ 
+ 
+ 
+ SCENARIOS: TEST 20 TIMES AFTER 1 TRAINING
+ 
+ 1 DRONE: DIFFERENT GOAL POSITIONS, DIFFERENT INITAL DRONE POSITIONS
+ 
+	 PPO:
+	 	SUCCESS/COLLISION:
+	 
+	 DDPG: 
+	 	SUCCESS/COLLISION:
+	 	
+	 	SSSCSCSCCCSSSSCSCSSS 13/20 (-2.0, 9.0, 11.0) initial 3.0 -> 2. floor	
+	 	SSSSCSCSSCSSSSSSSCSC 16/20 (-1.0, 9.0, 15.0) initial 6.0 -> 3. floor	
+	 	SSSSSSSSSSSSSCSSSSSS 19/20 (-3.0, 11.0, 20.0) initial 8.0 -> 4. floor
+	 	
+	 	(0.0, 7.0, 11.0) ->  1722537164 rnd inital pos
+	 	(-2.0, 7.0, 15.0) -> 1722525977 rnd initial pos
+	 	(-2.0, 7.0, 20.0) -> 1722526177 rnd initial pos
+	 
+	 SAC:
+	 	SUCCESS/COLLISION:
+	 	
+	 	(-2.0, 9.0, 11) ->  1722524182 rnd inital pos
+	 	(-2.0, 7.0, 20.0) -> 1722525266 rnd initial pos
+	 	(-2.0, 7.0, 15.0) ->  1722525558 rnd initial pos
+	 	
+	 	
+	PPO:
+		SUCCESS/COLLISION:
+	 	
+	 	(0.0, 9.0, 11) ->  1722949378 rnd inital pos
+	 	(-2.0, 7.0, 20.0) -> 1722945165 rnd initial pos
+	 	(-2.0, 7.0, 15.0) -> 1722942848 rnd initial pos  	
+	 	
+	 	
+2 DRONES: DIFFERENT GOAL POSITIONS, DIFFERENT INITAL DRONE POSITIONS
+ 
+	 PPO:
+	 	SUCCESS/COLLISION:
+	 
+	 DDPG: 
+	 	SUCCESS/COLLISION:
+	 
+	 SAC:
+	 	SUCCESS/COLLISION:	

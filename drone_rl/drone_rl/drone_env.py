@@ -375,7 +375,7 @@ class DroneEnv(gym.Env):
         self.land()
         
         self.reset_simulation()
-        self.delete_entity_client.send_request('goal_circle_blue')
+        # self.delete_entity_client.send_request('goal_circle_blue')
         time.sleep(2) #needs a bit time to take off 
 
         self.takeOff()
@@ -390,7 +390,7 @@ class DroneEnv(gym.Env):
         time.sleep(1)
 
 
-        data = self.goal_client.send_request('goal_circle_blue', -1.0, 8.0, 11.0)
+        data = self.goal_client.send_request('goal_circle_blue', 0.0, 7.0, 11.0)
         coordinates = data['goal_circle_blue']
         self.goal_position = np.array([coordinates[0], coordinates[1], coordinates[2]])
 

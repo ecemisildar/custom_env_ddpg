@@ -13,7 +13,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
     use_gui = DeclareLaunchArgument("use_gui", default_value="false", choices=["true", "false"],
                                     description="Whether to execute gzclient")
-    xacro_file_name = "sjtu_drone.urdf.xacro"
+    xacro_file_name = "sjtu_drone2.urdf.xacro"
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     xacro_file = os.path.join(
         get_package_share_directory("sjtu_drone_description"),
@@ -21,33 +21,24 @@ def generate_launch_description():
     )
     yaml_file_path = os.path.join(
         get_package_share_directory('drone_rl'),
-        'config', 'drone.yaml'
+        'config', 'drone2.yaml'
     )   
     
     robot_description_config = xacro.process_file(xacro_file, mappings={"params_path": yaml_file_path})
     robot_desc = robot_description_config.toxml()
     # get ns from yaml
-    model_ns = "drone_1"
-    with open(yaml_file_path, 'r') as f:
-        yaml_dict = yaml.load(f, Loader=yaml.FullLoader)
-        model_ns = yaml_dict["namespace"] #+ "/"
-    print("namespace: ", model_ns)
+    model_ns = "drone_2"
 
 
-    world_file = os.path.join(
-        get_package_share_directory("sjtu_drone_description"),
-        "worlds", "env.world"
-    )
-
-    def launch_gzclient(context, *args, **kwargs):
-        if context.launch_configurations.get('use_gui') == 'false':
-            return [IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-                ),
-                launch_arguments={'verbose': 'true'}.items()
-            )]
-        return []
+    # def launch_gzclient(context, *args, **kwargs):
+    #     if context.launch_configurations.get('use_gui') == 'false':
+    #         return [IncludeLaunchDescription(
+    #             PythonLaunchDescriptionSource(
+    #                 os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+    #             ),
+    #             launch_arguments={'verbose': 'true'}.items()
+    #         )]
+    #     return []
 
     return LaunchDescription([
         use_gui,
@@ -69,28 +60,19 @@ def generate_launch_description():
             output='screen',
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-            ),
-            launch_arguments={'world': world_file,
-                              'verbose': "true",
-                              'extra_gazebo_args': 'verbose'}.items()
-        ),
-
-        OpaqueFunction(function=launch_gzclient),
+       
 
         Node(
             package="drone_rl",
             executable="spawn_drone",
-            arguments=[robot_desc, model_ns],
+            arguments=[robot_desc, model_ns, "2", "0", "0"],
             output="screen"
         ),
 
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["0", "0", "0", "0", "0", "0", "world", f"{model_ns}/odom"],
+            arguments=["2", "0", "0", "0", "0", "0", "world", f"{model_ns}/odom"],
             output="screen"
         ),
     ])

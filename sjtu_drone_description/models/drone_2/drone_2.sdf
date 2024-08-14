@@ -1,5 +1,5 @@
 <sdf version='1.7'>
-  <model name='sjtu_drone'>
+  <model name='drone_2'>
     <link name='base_footprint'>
       <inertial>
         <pose>0 0 0 0 -0 0</pose>
@@ -13,21 +13,21 @@
           <izz>0.218</izz>
         </inertia>
       </inertial>
-      <collision name='base_footprint_fixed_joint_lump__sjtu_drone_collision_collision'>
+      <collision name='base_footprint_fixed_joint_lump__drone_2_collision_collision'>
         <pose>0 0 0.04 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://sjtu_drone/quadrotor_4.dae</uri>
+            <uri>model://drone_2/quadrotor_4.dae</uri>
           </mesh>
         </geometry>
       </collision>
-      <visual name='base_footprint_fixed_joint_lump__sjtu_drone_visual_visual'>
+      <visual name='base_footprint_fixed_joint_lump__drone_2_visual_visual'>
         <pose>0 0 0.04 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-              <uri>model://sjtu_drone/quadrotor_4.dae</uri>
+              <uri>model://drone_2/quadrotor_4.dae</uri>
           </mesh>
         </geometry>
       </visual>

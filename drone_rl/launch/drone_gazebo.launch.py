@@ -27,7 +27,7 @@ def generate_launch_description():
     robot_description_config = xacro.process_file(xacro_file, mappings={"params_path": yaml_file_path})
     robot_desc = robot_description_config.toxml()
     # get ns from yaml
-    model_ns = "drone"
+    model_ns = "drone_1"
     with open(yaml_file_path, 'r') as f:
         yaml_dict = yaml.load(f, Loader=yaml.FullLoader)
         model_ns = yaml_dict["namespace"] #+ "/"

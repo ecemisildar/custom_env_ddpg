@@ -74,19 +74,19 @@ class DroneEnv(gym.Env):
         action_high = np.array([1, 1, 1], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=action_low, high=action_high, dtype=np.float32)
 
-        self.depth_sub = self.node.create_subscription(Image, '/simple_drone/front_camera/depth/image_raw', self.depth_callback, 10)
-        self.rgb_sub = self.node.create_subscription(Image, '/simple_drone/front_camera/image_raw', self.rgb_callback, 10)
+        self.depth_sub = self.node.create_subscription(Image, '/drone_1/front_camera/depth/image_raw', self.depth_callback, 10)
+        self.rgb_sub = self.node.create_subscription(Image, '/drone_1/front_camera/image_raw', self.rgb_callback, 10)
         
-        self.current_pose_sub = self.node.create_subscription(Odometry, '/simple_drone/odom', 
+        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone_1/odom', 
                                                               self.position_callback, 1024)
         
-        self.collision_sub = self.node.create_subscription(ContactsState, '/simple_drone/bumper_states', 
+        self.collision_sub = self.node.create_subscription(ContactsState, '/drone_1/bumper_states', 
                                                            self.collision_callback, 10)
        
 
-        self.speed_motors_pub = self.node.create_publisher(Twist, '/simple_drone/cmd_vel', 10)
-        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/simple_drone/takeoff', 10)
-        self.land_publisher = self.node.create_publisher(EmptyMsg, '/simple_drone/land', 10)
+        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone_1/cmd_vel', 10)
+        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone_1/takeoff', 10)
+        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone_1/land', 10)
 
 
 
@@ -375,7 +375,6 @@ class DroneEnv(gym.Env):
         self.land()
         
         self.reset_simulation()
-        # self.delete_entity_client.send_request('goal_circle_blue')
         time.sleep(2) #needs a bit time to take off 
 
         self.takeOff()

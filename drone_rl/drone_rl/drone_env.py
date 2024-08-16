@@ -74,19 +74,19 @@ class DroneEnv(gym.Env):
         action_high = np.array([1, 1, 1], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=action_low, high=action_high, dtype=np.float32)
 
-        self.depth_sub = self.node.create_subscription(Image, '/drone_1/front_camera/depth/image_raw', self.depth_callback, 10)
-        self.rgb_sub = self.node.create_subscription(Image, '/drone_1/front_camera/image_raw', self.rgb_callback, 10)
+        self.depth_sub = self.node.create_subscription(Image, '/drone1/front_camera/depth/image_raw', self.depth_callback, 10)
+        self.rgb_sub = self.node.create_subscription(Image, '/drone1/front_camera/image_raw', self.rgb_callback, 10)
         
-        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone_1/odom', 
+        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone1/odom', 
                                                               self.position_callback, 1024)
         
-        self.collision_sub = self.node.create_subscription(ContactsState, '/drone_1/bumper_states', 
+        self.collision_sub = self.node.create_subscription(ContactsState, '/drone1/bumper_states', 
                                                            self.collision_callback, 10)
        
 
-        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone_1/cmd_vel', 10)
-        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone_1/takeoff', 10)
-        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone_1/land', 10)
+        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone1/cmd_vel', 10)
+        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone1/takeoff', 10)
+        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone1/land', 10)
 
 
 
@@ -105,7 +105,7 @@ class DroneEnv(gym.Env):
             # Check if either collision name contains "Wall"
             # if 'Wall' in self.collision1_name or 'Wall' in self.collision2_name:
             if 'collapsed_industrial' in self.collision1_name or 'collapsed_industrial' in self.collision2_name:
-                # print("Collision with a wall detected!")
+                print("Collision with a wall detected!")
                 self.wall = 1
                 # self.terminated = True    
 

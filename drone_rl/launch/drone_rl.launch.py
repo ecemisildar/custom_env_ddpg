@@ -32,11 +32,11 @@ def generate_launch_description():
             )
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(drone_rl_path, 'launch', 'drone_2.launch.py')
-            )
-        ), 
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(
+        #         os.path.join(drone_rl_path, 'launch', 'drone_2.launch.py')
+        #     )
+        # ), 
 
             
     ])

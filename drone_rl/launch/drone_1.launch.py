@@ -13,7 +13,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
     use_gui = DeclareLaunchArgument("use_gui", default_value="false", choices=["true", "false"],
                                     description="Whether to execute gzclient")
-    xacro_file_name = "sjtu_drone.urdf.xacro"
+    xacro_file_name = "sjtu_drone_bumper.urdf.xacro"
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     
     xacro_file = os.path.join(
@@ -63,14 +63,14 @@ def generate_launch_description():
         Node(
             package="drone_rl",
             executable="spawn_drone",
-            arguments=[robot_desc, model_ns, "0","0", "10"],
+            arguments=[robot_desc, model_ns, "0","0", "0"],
             output="screen"
         ),
 
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["0", "0", "10", "0", "0", "0", "world", f"{model_ns}/odom"],
+            arguments=["0", "0", "0", "0", "0", "0", "world", f"{model_ns}/odom"],
             output="screen"
         ),
     ])

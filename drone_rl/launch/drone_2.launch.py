@@ -65,14 +65,16 @@ def generate_launch_description():
         Node(
             package="drone_rl",
             executable="spawn_drone",
-            arguments=[robot_desc, model_ns, "2", "0", "0"],
+            namespace=model_ns,
+            arguments=[robot_desc, model_ns, "2", "0", "10"],
             output="screen"
         ),
 
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["2", "0", "0", "0", "0", "0", "world", f"{model_ns}/odom"],
+            namespace=model_ns,
+            arguments=["2", "0", "10", "0", "0", "0", "world", f"{model_ns}/odom"],
             output="screen"
         ),
     ])

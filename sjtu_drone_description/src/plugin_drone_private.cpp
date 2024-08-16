@@ -24,7 +24,7 @@ DroneSimpleControllerPrivate::DroneSimpleControllerPrivate()
 : m_timeAfterCmd(0.0)
   , navi_state(LANDED_MODEL)
   , m_posCtrl(false)
-  , m_velMode(false)
+  , m_velMode(true)
   , odom_seq(0)
   , odom_hz(30)
   , last_odom_publish_time_(0.0)
@@ -100,6 +100,8 @@ void DroneSimpleControllerPrivate::InitSubscribers(
   } else {
     RCLCPP_ERROR(ros_node_->get_logger(), "No takeoff topic defined!");
   }
+
+
 
   // subscribe command: land command
   if (!land_topic_.empty()) {

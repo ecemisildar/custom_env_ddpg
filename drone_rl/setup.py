@@ -25,7 +25,8 @@ setup(
             'delete_entities = drone_rl.delete_entites:main',
             'goal_position = drone_rl.goal_position:main',
             'drone_env = drone_rl.drone_env:main',
-            #'feedback_node = drone_rl.ddpg:main',
+            'drone_env2 = drone_rl.drone_env2:main',
+            'takeoff_publisher = drone_rl.takeoff:main',
         ],
     },
 )

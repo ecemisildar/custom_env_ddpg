@@ -31,14 +31,12 @@
       <origin rpy="0 0 0" xyz="0   0   0.04"/>
       <geometry>
         <mesh filename="file://$(find sjtu_drone_description)/models/drone_2/quadrotor_4.stl"/>
-        <!-- <mesh filename="package://sjtu_drone/quadrotor_4.stl"/> -->
       </geometry>
     </collision>
     <visual name="sjtu_drone_visual">
       <origin rpy="0 0 0" xyz="0   0   0.04"/>
       <geometry>
         <mesh filename="file://$(find sjtu_drone_description)/models/drone_2/quadrotor_4.dae"/>
-        <!-- <mesh filename="package://sjtu_drone/quadrotor_4.dae"/> -->
       </geometry>
     </visual>
   </link>

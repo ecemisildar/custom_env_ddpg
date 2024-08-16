@@ -14,6 +14,7 @@ def generate_launch_description():
     use_gui = DeclareLaunchArgument("use_gui", default_value="false", choices=["true", "false"],
                                     description="Whether to execute gzclient")
     xacro_file_name = "sjtu_drone.urdf.xacro"
+    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     
     xacro_file = os.path.join(
         get_package_share_directory("sjtu_drone_description"),
@@ -29,7 +30,16 @@ def generate_launch_description():
     # get ns from yaml
     model_ns = "drone_1"
 
-
+    # def launch_gzclient(context, *args, **kwargs):
+    #     if context.launch_configurations.get('use_gui') == 'false':
+    #         return [IncludeLaunchDescription(
+    #             PythonLaunchDescriptionSource(
+    #                 os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+    #             ),
+    #             launch_arguments={'verbose': 'true'}.items()
+    #         )]
+    #     return []
+    
     return LaunchDescription([
         use_gui,
         Node(
@@ -53,14 +63,14 @@ def generate_launch_description():
         Node(
             package="drone_rl",
             executable="spawn_drone",
-            arguments=[robot_desc, model_ns, "0", "0", "0"],
+            arguments=[robot_desc, model_ns, "0","0", "10"],
             output="screen"
         ),
 
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["0", "0", "0", "0", "0", "0", "world", f"{model_ns}/odom"],
+            arguments=["0", "0", "10", "0", "0", "0", "world", f"{model_ns}/odom"],
             output="screen"
         ),
     ])

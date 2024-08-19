@@ -50,6 +50,7 @@
   <gazebo>
     <plugin name='simple_drone' filename='libplugin_drone.so'>
       <bodyName>${drone_id}/base_link</bodyName>
+      <pub_odom>true</pub_odom>
       <rosNamespace>${drone_id}</rosNamespace>
       <imuTopic>${drone_id}/imu</imuTopic>
       <rollpitchProportionalGain>10.0</rollpitchProportionalGain>

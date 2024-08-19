@@ -3,10 +3,7 @@ import os
 from drone_env import DroneEnv
 import time
 import tensorflow as tf
-from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
-from stable_baselines3.common.callbacks import EvalCallback
-
-from typing import Callable
+from stable_baselines3.common.noise import NormalActionNoise
 
 
 import numpy as np
@@ -17,26 +14,6 @@ import gym
 models_dir = f"models/{int(time.time())}/"
 logdir = f"logs/{int(time.time())}/"
 name = f"DDPG"
-
-
-def linear_schedule(initial_value: float) -> Callable[[float], float]:
-    """
-    Linear learning rate schedule.
-
-    :param initial_value: Initial learning rate.
-    :return: schedule that computes
-      current learning rate depending on remaining progress
-    """
-    def func(progress_remaining: float) -> float:
-        """
-        Progress will decrease from 1 (beginning) to 0.
-
-        :param progress_remaining:
-        :return: current learning rate
-        """
-        return progress_remaining * initial_value
-
-    return func
 
 
 if not os.path.exists(models_dir):
@@ -50,7 +27,6 @@ env = make_vec_env(lambda: DroneEnv(), n_envs=1)
 
 n_actions = env.action_space.shape[-1]
 action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
-# action_noise = OrnsteinUhlenbeckActionNoise()
 
 
 TIMESTEPS = int(2e6)

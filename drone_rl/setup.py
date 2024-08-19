@@ -26,7 +26,7 @@ setup(
             'goal_position = drone_rl.goal_position:main',
             'drone_env = drone_rl.drone_env:main',
             'drone_env2 = drone_rl.drone_env2:main',
-            'takeoff_publisher = drone_rl.takeoff:main',
+            'drone_manager = drone_rl.drone_manager:main',
         ],
     },
 )

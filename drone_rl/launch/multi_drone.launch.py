@@ -32,6 +32,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
     use_gui = DeclareLaunchArgument("use_gui", default_value="true", choices=["true", "false"], description="Whether to execute gzclient")
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+    pkg_env = get_package_share_directory('sjtu_drone_description')
     
     r_1_doc = xacro.process_file(XACRO_FILE_PATH, mappings = {"drone_id":R_NS[1]})
     r_1_desc = r_1_doc.toprettyxml(indent='  ')
@@ -39,7 +40,7 @@ def generate_launch_description():
     r_2_doc = xacro.process_file(XACRO_FILE_PATH, mappings = {"drone_id":R_NS[2]})
     r_2_desc = r_2_doc.toprettyxml(indent='  ')
 
-    world_file = os.path.join(pkg_gazebo_ros,"worlds", "empty.world")
+    world_file = os.path.join(pkg_env,"worlds", "env.world")
 
     def launch_gzclient(context, *args, **kwargs):
         if context.launch_configurations.get('use_gui') == 'true':
@@ -99,15 +100,35 @@ def generate_launch_description():
 
         Node(
             package="drone_rl",
+            executable="drone_manager",
+            output="screen"
+        ),
+
+        Node(
+            package="drone_rl",
             executable="spawn_drone",
             arguments=[r_1_desc, R_NS[1], "0", "0", "0"],
             output="screen"
         ),
 
-        # Node(
-        #     package="drone_rl",
-        #     executable="spawn_drone",
-        #     arguments=[r_2_desc, R_NS[2], "0", "-2", "0"],
-        #     output="screen"
-        # )
+        Node(
+            package="drone_rl",
+            executable="spawn_drone",
+            arguments=[r_2_desc, R_NS[2], "2", "0", "0"],
+            output="screen"
+        ),
+
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            arguments=["0", "0", "0", "0", "0", "0", "world", f"{R_NS[1]}/odom"],
+            output="screen"
+        ),
+
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            arguments=["2", "0", "0", "0", "0", "0", "world", f"{R_NS[2]}/odom"],
+            output="screen"
+        ),
     ])

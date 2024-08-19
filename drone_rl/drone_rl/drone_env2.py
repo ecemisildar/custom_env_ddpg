@@ -5,6 +5,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, Range
 from std_srvs.srv import Empty
 from std_msgs.msg import Empty as EmptyMsg
+from std_msgs.msg import Bool
 
 
 from cv_bridge import CvBridge
@@ -47,6 +48,7 @@ class DroneEnv2(gym.Env):
         self.goal_reached = False
         self.terminated = False # when time limit is reached     
         self.truncated = False
+        self.stop_signal = False
         # self.ddpg = DDPGNode()
         
         self.agent_position = np.array([0.0, 0.0, 0.0])
@@ -74,23 +76,32 @@ class DroneEnv2(gym.Env):
         action_high = np.array([1, 1, 1], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=action_low, high=action_high, dtype=np.float32)
 
-        self.depth_sub = self.node.create_subscription(Image, '/drone_2/front_camera/depth/image_raw', self.depth_callback, 10)
-        self.rgb_sub = self.node.create_subscription(Image, '/drone_2/front_camera/image_raw', self.rgb_callback, 10)
+        self.stop_signal_sub = self.node.create_subscription(Bool, '/drone2/stop_rl_node', self.stop_signal_callback, 10)
+    
+
+        self.depth_sub = self.node.create_subscription(Image, '/drone2/front_camera/depth/image_raw', self.depth_callback, 10)
+        self.rgb_sub = self.node.create_subscription(Image, '/drone2/front_camera/image_raw', self.rgb_callback, 10)
         
-        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone_2/odom', 
+        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone2/odom', 
                                                               self.position_callback, 1024)
         
-        self.collision_sub = self.node.create_subscription(ContactsState, '/drone_2/bumper_states', 
+        self.collision_sub = self.node.create_subscription(ContactsState, '/drone2/bumper_states', 
                                                            self.collision_callback, 10)
        
 
-        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone_2/cmd_vel', 10)
-        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone_2/takeoff', 10)
-        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone_2/land', 10)
+        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone2/cmd_vel', 10)
+        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone2/takeoff', 10)
+        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone2/land', 10)
 
 
 
         self.reset_client = self.node.create_client(Empty, '/reset_world')
+
+    def stop_signal_callback(self, msg):
+        if msg.data:
+            self.stop_signal = True
+            self.node.get_logger().info("Received stop signal. Terminating RL operations.")
+
 
     def collision_callback(self, msg):
         self.wall = 0
@@ -246,20 +257,21 @@ class DroneEnv2(gym.Env):
             self.node.get_logger().error('Failed to reset simulation')  
      
 
-    def quaternion_to_euler(self, quaternion):
-        orientation_list = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
-        (roll, pitch, yaw) = tf_transformations.euler_from_quaternion(orientation_list)
-        return roll, pitch, yaw 
+    # def quaternion_to_euler(self, quaternion):
+    #     orientation_list = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    #     (roll, pitch, yaw) = tf_transformations.euler_from_quaternion(orientation_list)
+    #     return roll, pitch, yaw 
     
 
     def position_callback(self, msg):
         position = msg.pose.pose.position
-        quaternion = msg.pose.pose.orientation
+       
+        # quaternion = msg.pose.pose.orientation
 
-        roll, pitch, yaw = self.quaternion_to_euler(quaternion)
+        # roll, pitch, yaw = self.quaternion_to_euler(quaternion)
 
         self.agent_position = np.array([position.x, position.y, position.z])
-        self.agent_orientation = np.array([roll, pitch, yaw])
+        # self.agent_orientation = np.array([roll, pitch, yaw])
 
         if self.last_position is None:
             self.last_position = self.agent_position
@@ -282,13 +294,17 @@ class DroneEnv2(gym.Env):
     def get_observation(self):
         state = self.calculate_dist_angle()
         observation = [state[0], state[1], state[2]]
-        # observation = [state[0], state[1], state[2], self.agent_position[0], self.agent_position[1], self.agent_position[2], self.agent_orientation[2]]
-        print(f"Observation: {observation}")
+        # print(f"Observation: {observation}")
         
         return observation   
 
         
     def step(self, action):
+        if self.stop_signal:
+            self.node.get_logger().info("Stopping the RL node due to stop signal.")
+            self.close()
+            return None, None, True, True, {}
+
         self.take_action(float(action[0]), float(action[1]), float(action[2]))
         x,y, distance = self.calculate_dist_angle() #TODO
 
@@ -332,7 +348,7 @@ class DroneEnv2(gym.Env):
         reward = -1*distance_to_goal + penalty + reward_collision + penalty_distance
         self.episode_rewards.append(reward)
         
-        print(f"reward: {reward}") # TODO
+        # print(f"reward: {reward}") # TODO
 
         observation = self.get_observation()
         # if self.episode_number < 11:
@@ -368,7 +384,6 @@ class DroneEnv2(gym.Env):
         self._on_episode_end()
         self.distance = 10.0
         self.agent_position = np.array([0.0, 0.0, 0.0])
-        self.agent_orientation = np.array([0.0, 0.0, 0.0])
         self.wall = 0
         self.closest_distance = 10.0
 
@@ -383,7 +398,7 @@ class DroneEnv2(gym.Env):
         # vel_cmd.linear.x = np.random.uniform(-1,1)
         # vel_cmd.linear.y = np.random.uniform(-1,1)
         vel_cmd.angular.z = 1.0
-        vel_cmd.linear.z = 3.0
+        vel_cmd.linear.z = 5.0
         
         self.speed_motors_pub.publish(vel_cmd)
         time.sleep(1)

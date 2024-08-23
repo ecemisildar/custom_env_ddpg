@@ -18,6 +18,7 @@ from collections import deque
 from drone_rl.spawn_entities import SpawnEntityClient
 from drone_rl.goal_position import GoalClient
 from drone_rl.delete_entities import DeleteEntityClient
+from drone_rl.altitude_controller_client import AltitudeControllerClient
 from gazebo_msgs.srv import SpawnEntity
 from gazebo_msgs.msg import ContactsState
 
@@ -31,14 +32,15 @@ import tf_transformations
 
 
 
-class DroneEnv2(gym.Env):
-    def __init__(self):
-        super(DroneEnv2, self).__init__()
+class MultiDroneEnv(gym.Env):
+    def __init__(self, drone_id):
+        super(MultiDroneEnv, self).__init__()
 
         rclpy.init(args=None)
-        self.node = Node('drone_env2')
+        self.node = Node('multi_drone_env')
+        self.drone_id = drone_id
 
-        print('********** HELLO FROM MY ENV ************')
+        print(f'********** HELLO FROM {drone_id.upper()} ENV ************')
         logdir = f"logs/{int(time.time())}/"
         self.writer = SummaryWriter(logdir)
         self.resetting = True
@@ -59,6 +61,8 @@ class DroneEnv2(gym.Env):
 
         self.delete_entity_client = DeleteEntityClient()
         self.spawn_entity_client = SpawnEntityClient()
+        self.drone_controller = AltitudeControllerClient(drone_id)
+
         self.goal_client = GoalClient()
 
         self.bridge = CvBridge()
@@ -76,26 +80,57 @@ class DroneEnv2(gym.Env):
         action_high = np.array([1, 1, 1], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=action_low, high=action_high, dtype=np.float32)
 
-        self.stop_signal_sub = self.node.create_subscription(Bool, '/drone2/stop_rl_node', self.stop_signal_callback, 10)
-    
+        self.stop_signal_sub = self.node.create_subscription(Bool, f'/{drone_id}/stop_rl_node', self.stop_signal_callback, 10)
 
-        self.depth_sub = self.node.create_subscription(Image, '/drone2/front_camera/depth/image_raw', self.depth_callback, 10)
-        self.rgb_sub = self.node.create_subscription(Image, '/drone2/front_camera/image_raw', self.rgb_callback, 10)
+        self.depth_sub = self.node.create_subscription(Image, f'/{drone_id}/front_camera/depth/image_raw', self.depth_callback, 10)
+        self.rgb_sub = self.node.create_subscription(Image, f'/{drone_id}/front_camera/image_raw', self.rgb_callback, 10)
         
-        self.current_pose_sub = self.node.create_subscription(Odometry, '/drone2/odom', 
+        self.current_pose_sub = self.node.create_subscription(Odometry, f'/{drone_id}/odom', 
                                                               self.position_callback, 1024)
         
-        self.collision_sub = self.node.create_subscription(ContactsState, '/drone2/bumper_states', 
+        self.collision_sub = self.node.create_subscription(ContactsState, f'/{drone_id}/bumper_states', 
                                                            self.collision_callback, 10)
        
 
-        self.speed_motors_pub = self.node.create_publisher(Twist, '/drone2/cmd_vel', 10)
-        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone2/takeoff', 10)
-        self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone2/land', 10)
+        self.speed_motors_pub = self.node.create_publisher(Twist, f'/{drone_id}/cmd_vel', 10)
+        self.takeoff_publisher = self.node.create_publisher(EmptyMsg, f'/{drone_id}/takeoff', 10)
+        self.land_publisher = self.node.create_publisher(EmptyMsg, f'/{drone_id}/land', 10)
 
 
 
         self.reset_client = self.node.create_client(Empty, '/reset_world')
+
+        self.terminated_pub = self.node.create_publisher(Bool, f'/{drone_id}/terminated', 10)
+        self.truncated_pub = self.node.create_publisher(Bool, f'/{drone_id}/truncated', 10)
+
+        self.terminated_sub = self.node.create_subscription(
+            Bool, f'/drone{3-int(drone_id[-1])}/terminated', self.terminated_callback, 10)
+        self.truncated_sub = self.node.create_subscription(
+            Bool, f'/drone{3-int(drone_id[-1])}/truncated', self.truncated_callback, 10)
+
+
+    def update_status(self):
+        terminated_msg = Bool()
+        terminated_msg.data = self.terminated
+        if self.terminated == True:
+            self.terminated_pub.publish(terminated_msg)
+
+        truncated_msg = Bool()
+        truncated_msg.data = self.truncated
+        if self.truncated == True:
+            self.truncated_pub.publish(truncated_msg)
+
+    def terminated_callback(self, msg):
+        if msg.data:
+            self.terminated = True
+            print(f'{self.drone_id} detected termination from the other drone')
+
+    def truncated_callback(self, msg):
+        if msg.data:
+            self.truncated = True
+            print(f'{self.drone_id} detected termination from the other drone')
+
+
 
     def stop_signal_callback(self, msg):
         if msg.data:
@@ -113,12 +148,9 @@ class DroneEnv2(gym.Env):
             self.collision1_name = state.collision1_name
             self.collision2_name = state.collision2_name
 
-            # Check if either collision name contains "Wall"
-            # if 'Wall' in self.collision1_name or 'Wall' in self.collision2_name:
             if 'collapsed_industrial' in self.collision1_name or 'collapsed_industrial' in self.collision2_name:
-                # print("Collision with a wall detected!")
-                self.wall = 1
-                # self.terminated = True    
+                print("Collision with a wall detected!")
+                self.wall = 1  
 
     def rgb_callback(self, msg):
         if msg is None:
@@ -142,10 +174,6 @@ class DroneEnv2(gym.Env):
         
         # Convert RGB image to HSV
         hsv = cv2.cvtColor(self.rgb_image, cv2.COLOR_BGR2HSV)
-
-        # # Define blue color range in HSV
-        # lower_blue = np.array([100, 150, 0])
-        # upper_blue = np.array([140, 255, 255])
 
         bgr_blue = np.uint8([[[255, 0, 0]]])  # BGR format for blue
 
@@ -207,7 +235,7 @@ class DroneEnv2(gym.Env):
         _, _, d = self.find_blue_object()
         if d == 0:
             self.closest_distance = np.nanmin(self.depth_image)
-            print(f"Closest distance to an obstacle: {self.closest_distance}")
+            # print(f"Closest distance to an obstacle: {self.closest_distance}")
     
         
         cv2.imshow('Depth Image', normalized_depth)
@@ -257,21 +285,11 @@ class DroneEnv2(gym.Env):
             self.node.get_logger().error('Failed to reset simulation')  
      
 
-    # def quaternion_to_euler(self, quaternion):
-    #     orientation_list = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
-    #     (roll, pitch, yaw) = tf_transformations.euler_from_quaternion(orientation_list)
-    #     return roll, pitch, yaw 
-    
-
     def position_callback(self, msg):
         position = msg.pose.pose.position
-       
-        # quaternion = msg.pose.pose.orientation
-
-        # roll, pitch, yaw = self.quaternion_to_euler(quaternion)
 
         self.agent_position = np.array([position.x, position.y, position.z])
-        # self.agent_orientation = np.array([roll, pitch, yaw])
+        self.current_altitude = msg.pose.pose.position.z
 
         if self.last_position is None:
             self.last_position = self.agent_position
@@ -281,7 +299,7 @@ class DroneEnv2(gym.Env):
         else:
             self.elapsed_time = time.time() - self.start_time
 
-            if self.elapsed_time > 60.0: #TODO:change it back to 20
+            if self.elapsed_time > 60.0:
                 print("TIME EXCEEDED")
                 self.truncated = True            
 
@@ -304,6 +322,7 @@ class DroneEnv2(gym.Env):
             self.node.get_logger().info("Stopping the RL node due to stop signal.")
             self.close()
             return None, None, True, True, {}
+
 
         self.take_action(float(action[0]), float(action[1]), float(action[2]))
         x,y, distance = self.calculate_dist_angle() #TODO
@@ -344,18 +363,20 @@ class DroneEnv2(gym.Env):
             self.fail += 1   
             self.terminated = True         
   
-    
+        
         reward = -1*distance_to_goal + penalty + reward_collision + penalty_distance
         self.episode_rewards.append(reward)
+
+        self.update_status()
         
         # print(f"reward: {reward}") # TODO
 
         observation = self.get_observation()
-        # if self.episode_number < 11:
-        #     self.success_plot()
+        if self.episode_number < 11 and self.elapsed_time > 5.0:
+            self.success_plot()
 
         
-        rclpy.spin_once(self.node, timeout_sec= 1.0)
+        rclpy.spin_once(self.node, timeout_sec= 0.1)
 
         return observation, reward, self.terminated, self.truncated, {}
     
@@ -394,17 +415,9 @@ class DroneEnv2(gym.Env):
 
         self.takeOff()
 
-        vel_cmd = Twist()
-        # vel_cmd.linear.x = np.random.uniform(-1,1)
-        # vel_cmd.linear.y = np.random.uniform(-1,1)
-        vel_cmd.angular.z = 1.0
-        vel_cmd.linear.z = 5.0
-        
-        self.speed_motors_pub.publish(vel_cmd)
-        time.sleep(1)
+        self.set_and_move_to_altitude('drone1',True)
 
-
-        data = self.goal_client.send_request('goal_circle_blue', 0.0, 7.0, 11.0)
+        data = self.goal_client.send_request('goal_circle_blue', -2.0, 7.0, 11.0)
         coordinates = data['goal_circle_blue']
         self.goal_position = np.array([coordinates[0], coordinates[1], coordinates[2]])
 
@@ -415,7 +428,20 @@ class DroneEnv2(gym.Env):
 
         self.resetting = False
         return observation, info
-    
+
+    def set_and_move_to_altitude(self, drone_id, altitude_set):
+        # Select the appropriate controller based on drone_id
+        if drone_id == 'drone1':
+            controller = self.drone_controller
+        else:
+            raise ValueError("Unknown drone_id")
+
+        # Send a request to set the target altitude
+        controller.send_request(altitude_set)
+        
+        # Move to the target altitude
+        controller.move_to_altitude()
+
     def close(self):
         # Clean up ROS 2 resources
         self.node.destroy_node()

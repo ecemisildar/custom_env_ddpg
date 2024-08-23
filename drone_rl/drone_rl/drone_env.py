@@ -18,6 +18,7 @@ from collections import deque
 from drone_rl.spawn_entities import SpawnEntityClient
 from drone_rl.goal_position import GoalClient
 from drone_rl.delete_entities import DeleteEntityClient
+from drone_rl.altitude_controller_client import AltitudeControllerClient
 from gazebo_msgs.srv import SpawnEntity
 from gazebo_msgs.msg import ContactsState
 
@@ -59,6 +60,8 @@ class DroneEnv(gym.Env):
 
         self.delete_entity_client = DeleteEntityClient()
         self.spawn_entity_client = SpawnEntityClient()
+        self.drone_controller = AltitudeControllerClient('drone1')
+
         self.goal_client = GoalClient()
 
         self.bridge = CvBridge()
@@ -92,15 +95,8 @@ class DroneEnv(gym.Env):
         self.takeoff_publisher = self.node.create_publisher(EmptyMsg, '/drone1/takeoff', 10)
         self.land_publisher = self.node.create_publisher(EmptyMsg, '/drone1/land', 10)
 
-
-
         self.reset_client = self.node.create_client(Empty, '/reset_world')
 
-
-    def stop_signal_callback(self, msg):
-        if msg.data:
-            self.stop_signal = True
-            self.node.get_logger().info("Received stop signal. Terminating RL operations.")
 
 
     def collision_callback(self, msg):
@@ -207,7 +203,7 @@ class DroneEnv(gym.Env):
         _, _, d = self.find_blue_object()
         if d == 0:
             self.closest_distance = np.nanmin(self.depth_image)
-            print(f"Closest distance to an obstacle: {self.closest_distance}")
+            # print(f"Closest distance to an obstacle: {self.closest_distance}")
     
         
         cv2.imshow('Depth Image', normalized_depth)
@@ -257,12 +253,6 @@ class DroneEnv(gym.Env):
             self.node.get_logger().error('Failed to reset simulation')  
      
 
-    # def quaternion_to_euler(self, quaternion):
-    #     orientation_list = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
-    #     (roll, pitch, yaw) = tf_transformations.euler_from_quaternion(orientation_list)
-    #     return roll, pitch, yaw 
-    
-
     def position_callback(self, msg):
         position = msg.pose.pose.position
         # quaternion = msg.pose.pose.orientation
@@ -270,6 +260,8 @@ class DroneEnv(gym.Env):
         # roll, pitch, yaw = self.quaternion_to_euler(quaternion)
 
         self.agent_position = np.array([position.x, position.y, position.z])
+        self.current_altitude = msg.pose.pose.position.z
+        
         # self.agent_orientation = np.array([roll, pitch, yaw])
 
         if self.last_position is None:
@@ -280,7 +272,7 @@ class DroneEnv(gym.Env):
         else:
             self.elapsed_time = time.time() - self.start_time
 
-            if self.elapsed_time > 60.0: #TODO:change it back to 20
+            if self.elapsed_time > 60.0:
                 print("TIME EXCEEDED")
                 self.truncated = True            
 
@@ -293,7 +285,7 @@ class DroneEnv(gym.Env):
     def get_observation(self):
         state = self.calculate_dist_angle()
         observation = [state[0], state[1], state[2]]
-        print(f"Observation: {observation}")
+        # print(f"Observation: {observation}")
         
         return observation   
 
@@ -344,18 +336,20 @@ class DroneEnv(gym.Env):
             self.fail += 1   
             self.terminated = True         
   
-    
+        
         reward = -1*distance_to_goal + penalty + reward_collision + penalty_distance
         self.episode_rewards.append(reward)
+
+        self.update_status()
         
-        print(f"reward: {reward}") # TODO
+        # print(f"reward: {reward}") # TODO
 
         observation = self.get_observation()
-        # if self.episode_number < 11:
-        #     self.success_plot()
+        if self.episode_number < 11 and self.elapsed_time > 5.0:
+            self.success_plot()
 
         
-        rclpy.spin_once(self.node, timeout_sec= 1.0)
+        rclpy.spin_once(self.node, timeout_sec= 0.1)
 
         return observation, reward, self.terminated, self.truncated, {}
     
@@ -394,17 +388,9 @@ class DroneEnv(gym.Env):
 
         self.takeOff()
 
-        vel_cmd = Twist()
-        # vel_cmd.linear.x = np.random.uniform(-1,1)
-        # vel_cmd.linear.y = np.random.uniform(-1,1)
-        vel_cmd.angular.z = 1.0
-        vel_cmd.linear.z = 3.0
-        
-        self.speed_motors_pub.publish(vel_cmd)
-        time.sleep(1)
+        self.set_and_move_to_altitude('drone1',True)
 
-
-        data = self.goal_client.send_request('goal_circle_blue', 0.0, 7.0, 11.0)
+        data = self.goal_client.send_request('goal_circle_blue', -2.0, 7.0, 11.0)
         coordinates = data['goal_circle_blue']
         self.goal_position = np.array([coordinates[0], coordinates[1], coordinates[2]])
 
@@ -415,7 +401,20 @@ class DroneEnv(gym.Env):
 
         self.resetting = False
         return observation, info
-    
+
+    def set_and_move_to_altitude(self, drone_id, altitude_set):
+        # Select the appropriate controller based on drone_id
+        if drone_id == 'drone1':
+            controller = self.drone_controller
+        else:
+            raise ValueError("Unknown drone_id")
+
+        # Send a request to set the target altitude
+        controller.send_request(altitude_set)
+        
+        # Move to the target altitude
+        controller.move_to_altitude()
+
     def close(self):
         # Clean up ROS 2 resources
         self.node.destroy_node()

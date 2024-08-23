@@ -1,6 +1,7 @@
 from stable_baselines3 import PPO, DDPG, TD3, DDPG, SAC, A2C
 import os
-from drone_env2 import DroneEnv2
+# from drone_env import DroneEnv
+from multi_drone_env import MultiDroneEnv
 import time
 import tensorflow as tf
 from stable_baselines3.common.noise import NormalActionNoise
@@ -22,7 +23,8 @@ if not os.path.exists(models_dir):
 if not os.path.exists(logdir):
 	os.makedirs(logdir)
 
-env = make_vec_env(lambda: DroneEnv2(), n_envs=1)
+# env = make_vec_env(lambda: DroneEnv(), n_envs=1)
+env = make_vec_env(lambda: MultiDroneEnv('drone2'), n_envs=1)
 
 
 n_actions = env.action_space.shape[-1]
@@ -48,7 +50,7 @@ SAVE_INTERVAL = int(1e4)
 # env.close()
 
 
-model = DDPG.load("/home/ei_admin/rl_ws/drone_trainings_tests/trainings/DDPG/1722084092/DDPG_final")
+model = DDPG.load("/home/ei_admin/rl_ws/models/1724334986/DDPG_230001")
 
 obs = env.reset()
 while True:

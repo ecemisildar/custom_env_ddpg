@@ -114,7 +114,7 @@ def generate_launch_description():
         Node(
             package="drone_rl",
             executable="spawn_drone",
-            arguments=[r_2_desc, R_NS[2], "2", "0", "0"],
+            arguments=[r_2_desc, R_NS[2], "1", "-1", "0"],
             output="screen"
         ),
 
@@ -128,7 +128,7 @@ def generate_launch_description():
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["2", "0", "0", "0", "0", "0", "world", f"{R_NS[2]}/odom"],
+            arguments=["1", "-1", "0", "0", "0", "0", "world", f"{R_NS[2]}/odom"],
             output="screen"
         ),
     ])

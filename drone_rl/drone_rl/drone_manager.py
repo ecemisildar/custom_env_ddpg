@@ -11,15 +11,6 @@ class DroneManager(Node):
     def __init__(self):
         super().__init__('drone_manager')
 
-        # Define publishers and subscribers
-        # self.drone1_target_pub = self.create_publisher(Bool, '/drone1/target_detected', 10)
-        # self.drone2_target_pub = self.create_publisher(Bool, '/drone2/target_detected', 10)
-        # self.drone1_target_sub = self.create_subscription(Bool, '/drone1/target_detected', self.drone1_target_callback, 10)
-        # self.drone2_target_sub = self.create_subscription(Bool, '/drone2/target_detected', self.drone2_target_callback, 10)
-
-        # self.drone1_stop_rl_pub = self.create_publisher(Bool, '/drone1/stop_rl_node', 10)
-        # self.drone2_stop_rl_pub = self.create_publisher(Bool, '/drone2/stop_rl_node', 10)
-
         self.drone1_position_sub = self.create_subscription(Odometry, '/drone1/odom', self.drone1_position_callback, 1024)
         self.drone2_position_sub = self.create_subscription(Odometry, '/drone2/odom', self.drone2_position_callback, 1024)
 
@@ -46,22 +37,6 @@ class DroneManager(Node):
         position = msg.pose.pose.position
         self.drone2_position = np.array([position.x, position.y, position.z])
 
-    # def drone1_target_callback(self, msg):
-    #     if msg.data:
-    #         self.drone1_detected = True
-    #         self.get_logger().info("Drone 1 detected the target, resetting Drone 2.")
-    #         stop_msg = Bool()
-    #         stop_msg.data = True
-    #         self.drone2_stop_rl_pub.publish(stop_msg)
-
-    # def drone2_target_callback(self, msg):
-    #     if msg.data:
-    #         self.drone2_detected = True
-    #         self.get_logger().info("Drone 2 detected the target, resetting Drone 1.")
-    #         stop_msg = Bool()
-    #         stop_msg.data = True
-    #         self.drone1_stop_rl_pub.publish(stop_msg)
-
     def check_distances(self):
         # Calculate distance between drones
         distance = np.linalg.norm(self.drone1_position - self.drone2_position)
@@ -87,23 +62,6 @@ class DroneManager(Node):
             
         self.drone1_cmd_pub.publish(drone1_cmd)
         self.drone2_cmd_pub.publish(drone2_cmd)
-
-    # def check_target_detection(self):
-    #     if self.drone1_detected:
-    #         self.drone2_detected = False
-    #         self.reset_drone2()
-
-    #     elif self.drone2_detected:
-    #         self.drone1_detected = False
-    #         self.reset_drone1()
-
-    # def reset_drone1(self):
-    #     self.get_logger().info("Resetting Drone 1")
-    #     # Add code to reset Drone 1
-
-    # def reset_drone2(self):
-    #     self.get_logger().info("Resetting Drone 2")
-    #     # Add code to reset Drone 2
 
 def main(args=None):
     rclpy.init(args=args)

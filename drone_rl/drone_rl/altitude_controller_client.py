@@ -11,7 +11,7 @@ class AltitudeControllerClient(Node):
 
         # Initialize variables
         self.current_altitude = 0.0
-        self.target_altitude = 10.0
+        self.target_altitude = 15.0
         self.tolerance = 0.05  # Tolerance for altitude
 
         # Create a publisher for the velocity command
@@ -36,7 +36,7 @@ class AltitudeControllerClient(Node):
     def set_target_altitude_callback(self, request, response):
         # Update the target altitude based on the service request
         if request.data:
-            self.target_altitude = 10.0
+            self.target_altitude = 15.0
         else:
             self.target_altitude = 0.0
         response.success = True

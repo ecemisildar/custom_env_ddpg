@@ -41,7 +41,7 @@ class MultiDroneEnv(gym.Env):
         self.drone_id = drone_id
 
         print(f'********** HELLO FROM {drone_id.upper()} ENV ************')
-        logdir = f"logs/{int(time.time())}/"
+        logdir = f"multiple_drone_test_logs/{int(time.time())}/"
         self.writer = SummaryWriter(logdir)
         self.resetting = True
         self.episode_number = 0
@@ -74,7 +74,6 @@ class MultiDroneEnv(gym.Env):
         self.height = 360
 
         self.observation_space = gym.spaces.Box(low=0, high=640, shape=(3,), dtype=np.float32)
-        # self.observation_space = gym.spaces.Box(low=0, high=640, shape=(7,), dtype=np.float32)
 
         action_low = np.array([-1, -1, -1], dtype=np.float32)
         action_high = np.array([1, 1, 1], dtype=np.float32)
@@ -338,7 +337,6 @@ class MultiDroneEnv(gym.Env):
         agent_position = np.array(self.agent_position)
         goal_position = np.array(self.goal_position)
         distance_to_goal = math.dist(goal_position, agent_position)
-        # print(f'x pos: {self.agent_position[0]}, y pos: {self.agent_position[1]}')
 
         if distance_to_goal < 3.0: # needs to see the goal but doesnt really necessary to approach it
             print("******REACHED THE GOAL POSITION******") 
@@ -373,6 +371,7 @@ class MultiDroneEnv(gym.Env):
 
         observation = self.get_observation()
         if self.episode_number < 11 and self.elapsed_time > 5.0:
+            print(f'{self.drone_id} reached the goal {self.success} times')
             self.success_plot()
 
         
@@ -415,9 +414,9 @@ class MultiDroneEnv(gym.Env):
 
         self.takeOff()
 
-        self.set_and_move_to_altitude('drone1',True)
+        self.set_and_move_to_altitude(f'{self.drone_id}',True)
 
-        data = self.goal_client.send_request('goal_circle_blue', -2.0, 7.0, 11.0)
+        data = self.goal_client.send_request('goal_circle_blue', -2.0, 7.0, 15.0)
         coordinates = data['goal_circle_blue']
         self.goal_position = np.array([coordinates[0], coordinates[1], coordinates[2]])
 
@@ -430,12 +429,7 @@ class MultiDroneEnv(gym.Env):
         return observation, info
 
     def set_and_move_to_altitude(self, drone_id, altitude_set):
-        # Select the appropriate controller based on drone_id
-        if drone_id == 'drone1':
-            controller = self.drone_controller
-        else:
-            raise ValueError("Unknown drone_id")
-
+        controller = self.drone_controller
         # Send a request to set the target altitude
         controller.send_request(altitude_set)
         

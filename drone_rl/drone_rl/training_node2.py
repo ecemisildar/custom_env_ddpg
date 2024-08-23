@@ -50,15 +50,15 @@ SAVE_INTERVAL = int(1e4)
 # env.close()
 
 
-model = DDPG.load("/home/ei_admin/rl_ws/models/1724334986/DDPG_230001")
+model = DDPG.load("/home/ei_admin/rl_ws/drone_trainings_tests/trainings/DDPG/1722084092/DDPG_final")
 
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, terminated,  info = env.step(action)
 
-    if terminated :
-        obs = env.reset()
+    # if terminated :
+    #     obs = env.reset()
 
     
       
